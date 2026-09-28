@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>히라가나 PRO LUXE - 실시간 P2P 멀티플레이어 & 올인원 마스터</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=M+PLUS+Rounded+1c:wght@700;800;900&family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: rgba(22, 30, 49, 0.85);
+      --surface-elevated: rgba(30, 41, 66, 0.95);
+      --surface-border: rgba(255, 255, 255, 0.1);
+      --surface-border-hover: rgba(99, 102, 241, 0.5);
+      --primary: #6366f1;
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+      --accent: #38bdf8;
+      --gold: #fbbf24;
+      --gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+      --success: #10b981;
+      --danger: #f43f5e;
+      --text: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-tertiary: #64748b;
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(217, 70, 239, 0.15) 0px, transparent 50%),
+        radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.12) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: 'Pretendard', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+    }
+    .app-viewport { width: 100%; max-width: 980px; padding: 16px 14px 80px 14px; display: flex; flex-direction: column; gap: 16px; }
+    .glass-card { background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--surface-border); border-radius: var(--radius-xl); padding: 22px; box-shadow: var(--shadow-glass); position: relative; }
+    header.site-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; }
+    .brand-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .brand-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 22px; font-weight: 900; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+    .brand-info { display: flex; flex-direction: column; }
+    .brand-title { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; display: flex; align-items: center; gap: 6px; }
+    .luxe-tag { background: var(--primary-gradient); color: white; font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 6px; letter-spacing: 1px; }
+    .user-profile-badge { font-size: 11px; font-weight: 700; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .score-capsule { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--surface-border); padding: 6px 12px; border-radius: 30px; font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .score-capsule .val { color: var(--gold); font-weight: 900; font-size: 15px; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .icon-btn { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--surface-border); color: var(--text); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; }
+    .icon-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--surface-border-hover); transform: translateY(-2px); }
+    .view-screen { display: none; flex-direction: column; gap: 16px; animation: fadeIn 0.25s ease-out; }
+    .view-screen.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .view-top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; }
+    .btn-back-home { background: transparent; border: none; color: var(--text-secondary); font-size: 14px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: color 0.15s; }
+    .btn-back-home:hover { color: var(--primary); }
+    .btn { border: none; border-radius: var(--radius-md); font-family: inherit; font-size: 14px; font-weight: 800; padding: 12px 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.06); color: var(--text); border: 1px solid var(--surface-border); }
+    .btn-gold { background: var(--gold-gradient); color: #000; font-weight: 900; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+    .hero-panel { padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .hero-title h1 { font-size: 24px; font-weight: 900; margin-bottom: 6px; }
+    .hero-title p { font-size: 13px; color: var(--text-secondary); }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 640px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    .stat-pill { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+    .stat-val { font-size: 24px; font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .stat-val.streak { color: var(--gold); }
+    .stat-val.rate { color: var(--accent); }
+    .stat-val.today { color: var(--success); }
+    .stat-val.wrong { color: var(--danger); }
+    .stat-lbl { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+    .hub-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    @media (max-width: 768px) { .hub-grid { grid-template-columns: 1fr; } }
+    .hub-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius-xl); padding: 20px; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
+    .hub-card:active { transform: scale(0.98); }
+    .hub-card.party-highlight { border: 1px solid rgba(245, 158, 11, 0.5); background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(22, 30, 49, 0.85) 100%); }
+    .hub-icon-box { width: 52px; height: 52px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; border: 1px solid var(--surface-border); }
+    .hub-info h3 { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+    .hub-info p { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+    .badge-pill { font-size: 10px; font-weight: 900; padding: 3px 8px; border-radius: 6px; margin-left: 6px; }
+    .battle-hud { display: flex; justify-content: space-around; align-items: center; background: var(--surface-elevated); border: 1px solid var(--surface-border); border-radius: var(--radius-lg); padding: 16px 20px; margin: 16px 0; }
+    .player-card { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .player-name { font-size: 13px; font-weight: 800; color: var(--text-secondary); }
+    .player-score { font-size: 34px; font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .player-card.p1 .player-score { color: var(--accent); }
+    .player-card.p2 .player-score { color: #f43f5e; }
+    .timer-ring-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .timer-sec { font-size: 30px; font-weight: 900; color: var(--gold); font-family: 'Plus Jakarta Sans', sans-serif; }
+    .memory-matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 640px) { .memory-matrix { grid-template-columns: repeat(3, 1fr); } }
+    .memory-card { aspect-ratio: 1; background: var(--surface-elevated); border: 2px solid var(--surface-border); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; cursor: pointer; transition: all 0.25s; }
+    .memory-card.selected { border-color: var(--accent); background: rgba(56, 189, 248, 0.2); }
+    .memory-card.matched { border-color: var(--success); background: rgba(16, 185, 129, 0.2); opacity: 0.5; pointer-events: none; }
+    .deck-control-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--surface-border); padding: 8px 14px; border-radius: var(--radius-md); gap: 10px; flex-wrap: wrap; }
+    .pill-switch-group { display: flex; background: rgba(0, 0, 0, 0.3); padding: 3px; border-radius: 10px; gap: 4px; width: 100%; }
+    @media (min-width: 640px) { .pill-switch-group { width: auto; } }
+    .pill-switch-btn { border: none; background: transparent; color: var(--text-secondary); font-size: 12px; font-weight: 800; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; flex: 1; }
+    .pill-switch-btn.active { background: var(--primary); color: white; }
+    .pill-switch-btn.active-gold { background: var(--gold); color: #000; }
+    .flashcard-3d-wrap { perspective: 1000px; width: 100%; height: 310px; }
+    .flashcard-3d-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+    .flashcard-3d-inner.flipped { transform: rotateY(180deg); }
+    .flashcard-face { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: var(--radius-xl); border: 1px solid var(--surface-border); background: var(--surface-elevated); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .flashcard-face.back { transform: rotateY(180deg); background: rgba(22, 30, 49, 0.95); border-color: rgba(99, 102, 241, 0.5); }
+    .arena-grid-layout { display: grid; grid-template-columns: 1fr 340px; gap: 18px; }
+    @media (max-width: 768px) { .arena-grid-layout { grid-template-columns: 1fr; } }
+    .canvas-wrap { position: relative; width: 320px; height: 320px; background: #0d1424; border: 2px solid var(--surface-border); border-radius: var(--radius-xl); touch-action: none; overflow: hidden; }
+    .tian-grid { position: absolute; inset: 0; pointer-events: none; }
+    .tian-grid::before { content: ''; position: absolute; top: 50%; left: 6%; right: 6%; height: 1px; border-top: 1px dashed rgba(255, 255, 255, 0.08); }
+    .tian-grid::after { content: ''; position: absolute; left: 50%; top: 6%; bottom: 6%; width: 1px; border-left: 1px dashed rgba(255, 255, 255, 0.08); }
+    .ghost-glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 190px; font-weight: 800; color: rgba(99, 102, 241, 0.2); pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+    .ghost-glyph.show { opacity: 1; }
+    canvas.drawing-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; cursor: crosshair; }
+    .verdict-banner { width: 100%; min-height: 46px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 800; padding: 8px 12px; text-align: center; opacity: 0; transform: translateY(4px); transition: all 0.2s; }
+    .verdict-banner.show { opacity: 1; transform: translateY(0); }
+    .verdict-banner.pass { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); }
+    .verdict-banner.fail { background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { width: 100%; max-width: 440px; background: var(--surface-elevated); border: 1px solid var(--surface-border); border-radius: var(--radius-xl); padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); }
+    canvas#confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 99999; }
+  </style>
+</head>
+<body>
+
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Nickname Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 18px; font-weight: 800;">👤 닉네임 설정</h3>
+        <button class="icon-btn" id="btnCloseProfileModal" style="width: 32px; height: 32px; font-size: 14px;">✕</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary);">친구 대전 시 표시될 닉네임을 설정하세요.</p>
+      <input type="text" id="inputNickname" maxlength="8" style="width: 100%; padding: 12px 14px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); color: white; font-size: 15px; font-weight: 700; outline: none;">
+      <button class="btn btn-primary" id="btnSaveNickname" style="width: 100%;">저장</button>
+    </div>
+  </div>
+
+  <div class="app-viewport">
+    <!-- Header -->
+    <header class="glass-card site-header">
+      <div class="brand-logo" id="homeLogo">
+        <div class="brand-icon">あ</div>
+        <div class="brand-info">
+          <div class="brand-title">
+            <span>히라가나 PRO</span>
+            <span class="luxe-tag">LUXE</span>
+          </div>
+          <div class="user-profile-badge" id="btnOpenProfile">
+            <span>👤 <span id="headerNickname">학습자</span></span>
+            <span style="font-size: 10px; color: var(--text-tertiary);">[변경]</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="score-capsule">
+          <span>XP</span>
+          <span class="val" id="headerScore">0</span>
+        </div>
+        <button class="icon-btn" id="soundToggle" title="음향">🔊</button>
+        <button class="icon-btn" id="btnSettingsNav" title="환경설정">⚙️</button>
+      </div>
+    </header>
+
+    <!-- SCREEN 1: HOME -->
+    <main class="view-screen active" id="view-home">
+      <div class="glass-card hero-panel">
+        <div class="hero-title">
+          <h1>오늘도 10분 마스터 🇯🇵</h1>
+          <p>문자 104자 & 단어 104개! 실시간 P2P 친구 대전, 짝맞추기 게임, 정밀 필기</p>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <span class="stat-val streak" id="homeStreak">0</span>
+          <span class="stat-lbl">연속 정답</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-val rate" id="homeMastery">0%</span>
+          <span class="stat-lbl">전체 숙련도</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-val today" id="homeToday">0</span>
+          <span class="stat-lbl">오늘 푼 문제</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-val wrong" id="homeWrong">0</span>
+          <span class="stat-lbl">오답 수</span>
+        </div>
+      </div>
+
+      <div class="hub-grid">
+        <div class="hub-card party-highlight" id="navParty">
+          <div class="hub-icon-box" style="color: var(--gold); border-color: rgba(245, 158, 11, 0.4);">⚔️</div>
+          <div class="hub-info">
+            <h3>친구와 1:1 실시간 대전 <span class="badge-pill" style="background: var(--gold); color: black;">P2P 연결</span></h3>
+            <p>서버 없이 브라우저끼리 실시간 맞대결! 화면 공유 없이 각자 기기로 동시 스피드 배틀</p>
+          </div>
+        </div>
+
+        <div class="hub-card" id="navKana">
+          <div class="hub-icon-box" style="color: var(--primary);">🎴</div>
+          <div class="hub-info">
+            <h3>히라가나 다채로운 암기장 <span class="badge-pill" style="background: var(--primary); color: white;">다양한 모드</span></h3>
+            <p>3D 카드 플립, 메모리 짝맞추기 게임, 50음도순/셔플 선택 암기</p>
+          </div>
+        </div>
+
+        <div class="hub-card" id="navVocab">
+          <div class="hub-icon-box" style="color: var(--accent);">📚</div>
+          <div class="hub-info">
+            <h3>필수 단어 104 암기장 <span class="badge-pill" style="background: rgba(56, 189, 248, 0.2); color: var(--accent);">순서/셔플</span></h3>
+            <p>플래시카드, 양방향 퀴즈(일↔한), 고난도 철자 조합, 실시간 검색 사전</p>
+          </div>
+        </div>
+
+        <div class="hub-card" id="navDictation">
+          <div class="hub-icon-box" style="color: #f43f5e;">🔥</div>
+          <div class="hub-info">
+            <h3>심화: 단어 직접 쓰기 <span class="badge-pill" style="background: rgba(244, 63, 94, 0.2); color: #f43f5e;">받아쓰기</span></h3>
+            <p>한국어 뜻만 보고 단어의 모든 글자를 캔버스에 직접 써서 통과하는 모드</p>
+          </div>
+        </div>
+
+        <div class="hub-card" id="navArena">
+          <div class="hub-icon-box" style="color: var(--success);">✍️</div>
+          <div class="hub-info">
+            <h3>블라인드 필기 아레나 <span class="badge-pill" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">정밀 판정</span></h3>
+            <p>힌트 없이 소리만 듣고 직접 쓰기! 점/낙서 꼼수 차단 5단계 엄격 광학 검증</p>
+          </div>
+        </div>
+
+        <div class="hub-card" id="navSettings">
+          <div class="hub-icon-box" style="color: var(--text-tertiary);">⚙️</div>
+          <div class="hub-info">
+            <h3>환경 설정 & 학습 제어판</h3>
+            <p>음성 속도 조절, 오답 노트, 데이터 백업(JSON) 및 대전 기록 확인</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 2: P2P PARTY -->
+    <main class="view-screen" id="view-party">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromParty">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: var(--gold);">실시간 P2P 점수내기 대결 룸</span>
+      </div>
+      <div class="glass-card" style="text-align: center;">
+        <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">⚔️ 1:1 실시간 맞대결</h2>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">방을 만들어 친구에게 코드를 알려주거나, 친구의 방 코드를 입력해 실시간으로 접속하세요!</p>
+
+        <div id="p2pSetupPanel" style="display: flex; flex-direction: column; gap: 12px; max-width: 480px; margin: 0 auto; background: rgba(0,0,0,0.3); padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--surface-border);">
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-gold" id="btnHostGame" style="flex: 1;">방 만들기 (호스트)</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="text" id="inputJoinCode" placeholder="친구의 방 코드를 입력하세요" style="flex: 1; padding: 12px 14px; border-radius: 10px; background: rgba(0,0,0,0.4); border: 1px solid var(--surface-border); color: white; font-weight: 700; font-size: 14px; outline: none; text-transform: uppercase;">
+            <button class="btn btn-primary" id="btnJoinGame">입장</button>
+          </div>
+          <div id="p2pHostCodeArea" style="display: none; background: rgba(99,102,241,0.15); border: 1px dashed var(--primary); padding: 12px; border-radius: 10px;">
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">친구에게 전달할 방 코드:</div>
+            <div style="font-size: 20px; font-weight: 900; color: var(--gold); letter-spacing: 1px;" id="txtMyRoomCode">생성 중...</div>
+            <button class="btn btn-secondary" id="btnCopyRoomCode" style="margin-top: 8px; padding: 6px 12px; font-size: 12px;">방 코드 복사 📋</button>
+          </div>
+          <div id="p2pStatusLabel" style="font-size: 13px; font-weight: 700; color: var(--accent); margin-top: 8px;">연결 대기 중...</div>
+        </div>
+
+        <div id="p2pBattleArea" style="display: none; flex-direction: column; gap: 16px; margin-top: 20px;">
+          <div class="battle-hud">
+            <div class="player-card p1">
+              <span class="player-name" id="hudMyName">나</span>
+              <span class="player-score" id="hudMyScore">0</span>
+            </div>
+            <div class="timer-ring-box">
+              <span style="font-size: 11px; font-weight: 800; color: var(--text-tertiary);">남은 시간</span>
+              <span class="timer-sec" id="p2pTimerText">30s</span>
+            </div>
+            <div class="player-card p2">
+              <span class="player-name" id="hudPeerName">상대방</span>
+              <span class="player-score" id="hudPeerScore">0</span>
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 24px; border-radius: var(--radius-lg);">
+            <div style="font-family:'M PLUS Rounded 1c'; font-size: 64px; font-weight: 900;" id="p2pPromptText">あ</div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">올바른 단어 뜻을 빠르게 탭하세요!</p>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="p2pOptionsGrid"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 3: KANA HUB -->
+    <main class="view-screen" id="view-kana-hub">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromKana">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: var(--primary);">히라가나 다채로운 트레이닝</span>
+      </div>
+      <div class="glass-card">
+        <div class="deck-control-bar" style="margin-bottom: 18px;">
+          <div class="pill-switch-group">
+            <button class="pill-switch-btn active" id="btnKanaTabCard">🃏 3D 문자 플립</button>
+            <button class="pill-switch-btn" id="btnKanaTabMatch">🧩 카드 짝맞추기 게임</button>
+          </div>
+          <div class="pill-switch-group" id="kanaOrderGroup">
+            <button class="pill-switch-btn active" id="btnKOrderSeq">🔢 50음도순</button>
+            <button class="pill-switch-btn" id="btnKOrderShuffle">🔀 무작위 셔플</button>
+          </div>
+        </div>
+        <div id="kanaModeCard" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="flashcard-3d-wrap">
+            <div class="flashcard-3d-inner" id="kanaCardInner">
+              <div class="flashcard-face front">
+                <div style="font-family: 'M PLUS Rounded 1c'; font-size: 80px; font-weight: 900; line-height: 1.1;" id="kCardGlyph">あ</div>
+                <div style="font-size: 14px; font-weight: 800; color: var(--accent); margin-top: 10px;">카드를 터치하면 로마자와 발음이 공개됩니다 👆</div>
+              </div>
+              <div class="flashcard-face back">
+                <div style="font-family: 'M PLUS Rounded 1c'; font-size: 80px; font-weight: 900; color: var(--primary); line-height: 1.1;" id="kCardRomaji">a</div>
+                <div style="font-size: 18px; font-weight: 800; color: var(--accent); margin-top: 10px;" id="kCardKor">[ 아 ] · 아행</div>
+                <button class="icon-btn" id="kCardAudio" style="margin-top: 14px;">🔊</button>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" id="btnKPrev">◀ 이전 문자</button>
+            <button class="btn btn-primary" id="btnKNext" style="flex: 2;">다음 문자 ➔</button>
+          </div>
+        </div>
+        <div id="kanaModeMatch" style="display: none; flex-direction: column; gap: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; color: var(--text-secondary);">같은 발음의 히라가나와 로마자를 짝지어 보세요!</span>
+            <button class="btn btn-secondary" id="btnRestartMemory" style="padding: 6px 12px; font-size: 12px;">새 게임 🔄</button>
+          </div>
+          <div class="memory-matrix" id="memoryMatrix"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 4: VOCAB HUB -->
+    <main class="view-screen" id="view-vocab">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromVocab">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: var(--primary);">총 104개 필수 어휘</span>
+      </div>
+      <div class="glass-card">
+        <div class="deck-control-bar" style="margin-bottom: 18px;">
+          <div class="pill-switch-group">
+            <button class="pill-switch-btn active" id="vTabFlash">🃏 플래시카드</button>
+            <button class="pill-switch-btn" id="vTabQuiz">🎯 4지선다</button>
+            <button class="pill-switch-btn" id="vTabBuilder">🧩 철자 조합</button>
+            <button class="pill-switch-btn" id="vTabList">📑 단어장</button>
+          </div>
+          <div class="pill-switch-group">
+            <button class="pill-switch-btn active" id="btnVOrderSeq">🔢 순서대로</button>
+            <button class="pill-switch-btn" id="btnVOrderShuffle">🔀 무작위 셔플</button>
+          </div>
+        </div>
+
+        <div id="vSecFlash" style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="flashcard-3d-wrap">
+            <div class="flashcard-3d-inner" id="vFlashCardInner">
+              <div class="flashcard-face front">
+                <div style="font-size: 44px; font-weight: 900;" id="vCardKor">의자</div>
+              </div>
+              <div class="flashcard-face back">
+                <div style="font-family:'M PLUS Rounded 1c'; font-size: 46px; font-weight: 900; color: var(--primary);" id="vCardKana">いす</div>
+                <div style="font-size: 20px; font-weight: 800; color: var(--text-secondary); margin-top: 4px;" id="vCardKanji">椅子</div>
+                <div style="font-size: 15px; color: var(--accent); font-weight: 700; margin-top: 6px;" id="vCardRomaji">isu</div>
+                <button class="icon-btn" id="vCardAudio" style="margin-top: 14px;">🔊</button>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" id="btnVPrev">◀ 이전</button>
+            <button class="btn btn-primary" id="btnVNext" style="flex: 2;">다음 단어 ➔</button>
+          </div>
+        </div>
+
+        <div id="vSecQuiz" style="display: none; flex-direction: column; gap: 16px;">
+          <div style="display: flex; justify-content: center; gap: 6px;">
+            <button class="btn btn-primary" id="btnDirKorJap" style="font-size: 12px; padding: 6px 12px;">🇰🇷 ➔ 🇯🇵</button>
+            <button class="btn btn-secondary" id="btnDirJapKor" style="font-size: 12px; padding: 6px 12px;">🇯🇵 ➔ 🇰🇷</button>
+          </div>
+          <div style="text-align: center; padding: 24px; background: rgba(0,0,0,0.3); border-radius: var(--radius-lg);">
+            <div style="font-size: 12px; font-weight: 800; color: var(--accent);" id="vQuizCat">사물</div>
+            <div style="font-size: 40px; font-weight: 900; margin: 8px 0;" id="vQuizPrompt">의자</div>
+            <button class="icon-btn" id="vQuizPromptAudio" style="margin: 0 auto; display: none;">🔊</button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;" id="vQuizGrid"></div>
+        </div>
+
+        <div id="vSecBuilder" style="display: none; flex-direction: column; gap: 16px; align-items: center;">
+          <div style="font-size: 32px; font-weight: 900;" id="bKorTarget">수박</div>
+          <div style="display: flex; gap: 8px; min-height: 52px; padding: 6px 16px; background: rgba(0,0,0,0.4); border-radius: 12px;" id="bSlots"></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;" id="bPillsTray"></div>
+          <div class="verdict-banner" id="bBanner"><span>선택하세요</span></div>
+          <div style="display: flex; gap: 10px; width: 100%;">
+            <button class="btn btn-secondary" id="btnBReset">다시 조합</button>
+            <button class="btn btn-primary" id="btnBNext" style="flex: 2;">다음 단어 ➔</button>
+          </div>
+        </div>
+
+        <div id="vSecList" style="display: none; flex-direction: column; gap: 12px;">
+          <input type="text" id="wbSearch" placeholder="검색..." style="padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--surface-border); color: white; outline: none;">
+          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto;" id="wbList"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 5: DICTATION -->
+    <main class="view-screen" id="view-dictation">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromDict">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: #f43f5e;">🔥 단어 직접 쓰기</span>
+      </div>
+      <div class="glass-card">
+        <div class="deck-control-bar" style="margin-bottom: 18px;">
+          <div class="pill-switch-group" style="width: 100%;">
+            <button class="pill-switch-btn active" id="btnDictOrderSeq">🔢 순서대로</button>
+            <button class="pill-switch-btn" id="btnDictOrderShuffle">🔀 무작위 셔플</button>
+          </div>
+        </div>
+        <div class="arena-grid-layout">
+          <div style="display: flex; flex-direction: column; gap: 14px; text-align: center;">
+            <div style="font-size: 42px; font-weight: 900;" id="dictKorPrompt">의자</div>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;" id="dictProgressBadges"></div>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+              <button class="icon-btn" id="btnDictAudio">🔊</button>
+              <button class="btn btn-secondary" id="btnDictPeek" style="font-size: 12px; padding: 6px 12px;">💡 힌트</button>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div class="canvas-wrap" id="dictCanvasWrap">
+              <div class="tian-grid"></div>
+              <div class="ghost-glyph" id="dictGhost">い</div>
+              <canvas class="drawing-canvas" id="dictCanvas"></canvas>
+            </div>
+            <div class="verdict-banner" id="dictVerdict"><span>펜을 떼면 자동 채점</span></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+              <button class="btn btn-secondary" id="btnDictClear">지우기</button>
+              <button class="btn btn-primary" id="btnDictSkip">건너뛰기 ➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 6: ARENA -->
+    <main class="view-screen" id="view-arena">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromArena">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: var(--success);">✍️ 블라인드 필기 아레나</span>
+      </div>
+      <div class="glass-card">
+        <div class="arena-grid-layout">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;">
+            <div style="font-size: 64px; font-weight: 900; color: var(--primary);" id="arenaRomaji">ka</div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--text-secondary);" id="arenaKor">[ 카 ]</div>
+            <button class="icon-btn" id="btnArenaAudio">🔊</button>
+            <button class="btn btn-secondary" id="btnArenaPeek" style="font-size: 12px; padding: 6px 12px;">💡 힌트</button>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div class="canvas-wrap" id="arenaCanvasWrap">
+              <div class="tian-grid"></div>
+              <div class="ghost-glyph" id="arenaGhost">か</div>
+              <canvas class="drawing-canvas" id="arenaCanvas"></canvas>
+            </div>
+            <div class="verdict-banner" id="arenaVerdict"><span>펜을 떼면 자동 채점</span></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;">
+              <button class="btn btn-secondary" id="btnArenaClear">지우기</button>
+              <button class="btn btn-primary" id="btnArenaSkip">건너뛰기 ➔</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 7: SETTINGS & NOTEBOOK -->
+    <main class="view-screen" id="view-settings">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromSettings">◀ 메인 메뉴로 나가기</button>
+        <span style="font-size: 13px; font-weight: 800; color: var(--primary);">환경설정 및 학습 관리</span>
+      </div>
+      <div class="glass-card" style="display: flex; flex-direction: column; gap: 16px;">
+        <h3 style="font-size: 16px; font-weight: 800;">⚔️ 최근 대전 기록</h3>
+        <div id="battleHistoryList" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;"></div>
+
+        <h3 style="font-size: 16px; font-weight: 800; margin-top: 10px;">❌ 취약 오답 노트</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn btn-secondary" id="btnClearNotebook" style="font-size: 11px; padding: 4px 10px;">비우기</button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; max-height: 240px; overflow-y: auto;" id="notebookGrid"></div>
+
+        <h3 style="font-size: 16px; font-weight: 800; margin-top: 10px;">⚙️ 앱 상세 설정</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: var(--radius-md);">
+          <div style="font-weight: 800; font-size: 14px;">발음 속도</div>
+          <select id="selRate" style="padding: 6px 10px; border-radius: 8px; background: #161e31; color: white; border: 1px solid var(--surface-border);">
+            <option value="0.6">0.6x (아주 천천히)</option>
+            <option value="0.75" selected>0.75x (표준)</option>
+            <option value="0.9">0.9x (빠르게)</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(0,0,0,0.3); border-radius: var(--radius-md);">
+          <div style="font-weight: 800; font-size: 14px;">데이터 초기화</div>
+          <button class="btn btn-secondary" id="btnResetData" style="color: var(--danger); font-size: 12px; padding: 6px 12px;">초기화</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- SCREEN 8: CHART -->
+    <main class="view-screen" id="view-chart">
+      <div class="glass-card view-top-bar">
+        <button class="btn-back-home" id="backFromChart">◀ 메인 메뉴로 나가기</button>
+      </div>
+      <div class="glass-card">
+        <h2 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">📖 히라가나 50음도표</h2>
+        <div id="chartMatrixGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    /* Safe event listener helper to prevent crashes */
+    function on(id, ev, fn) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(ev, fn);
+    }
+
+    const VOCAB_DATA = [
+      { id: 1, kor: '의자', kana: 'いす', kanji: '椅子', romaji: 'isu', cat: '사물' },
+      { id: 2, kor: '역', kana: 'えき', kanji: '駅', romaji: 'eki', cat: '장소' },
+      { id: 3, kor: '우산', kana: 'かさ', kanji: '傘', romaji: 'kasa', cat: '사물' },
+      { id: 4, kor: '수박', kana: 'すいか', kanji: '西瓜', romaji: 'suika', cat: '음식' },
+      { id: 5, kor: '벚꽃', kana: 'さくら', kanji: '桜', romaji: 'sakura', cat: '자연' },
+      { id: 6, kor: '배', kana: 'ふね', kanji: '船', romaji: 'fune', cat: '교통' },
+      { id: 7, kor: '사람', kana: 'ひと', kanji: '人', romaji: 'hito', cat: '인물' },
+      { id: 8, kor: '꽃', kana: 'はな', kanji: '花', romaji: 'hana', cat: '자연' },
+      { id: 9, kor: '꿈', kana: 'ゆめ', kanji: '夢', romaji: 'yume', cat: '추상' },
+      { id: 10, kor: '산', kana: 'やま', kanji: '山', romaji: 'yama', cat: '자연' },
+      { id: 11, kor: '밤', kana: 'よる', kanji: '夜', romaji: 'yoru', cat: '시간' },
+      { id: 12, kor: '안경', kana: 'めがね', kanji: '眼鏡', romaji: 'megane', cat: '사물' },
+      { id: 13, kor: '물', kana: 'みず', kanji: '水', romaji: 'mizu', cat: '음식' },
+      { id: 14, kor: '번쩍번쩍', kana: 'ぴかぴか', kanji: 'ピカピカ', romaji: 'pikapika', cat: '의태어' },
+      { id: 15, kor: '감', kana: 'かき', kanji: '柿', romaji: 'kaki', cat: '음식' },
+      { id: 16, kor: '열쇠', kana: 'かぎ', kanji: '鍵', romaji: 'kagi', cat: '사물' },
+      { id: 17, kor: '뚜껑', kana: 'ふた', kanji: '蓋', romaji: 'futa', cat: '사물' },
+      { id: 18, kor: '차', kana: 'おちゃ', kanji: 'お茶', romaji: 'ocha', cat: '음식' },
+      { id: 19, kor: '가수', kana: 'かしゅ', kanji: '歌手', romaji: 'kashu', cat: '인물' },
+      { id: 20, kor: '사전', kana: 'じしょ', kanji: '辞書', romaji: 'jisho', cat: '사물' },
+      { id: 21, kor: '의사', kana: 'いしゃ', kanji: '医者', romaji: 'isha', cat: '인물' },
+      { id: 22, kor: '석공', kana: 'いしや', kanji: '石屋', romaji: 'ishiya', cat: '인물' },
+      { id: 23, kor: '십', kana: 'じゅう', kanji: '十', romaji: 'juu', cat: '숫자' },
+      { id: 24, kor: '자유', kana: 'じゆう', kanji: '自由', romaji: 'jiyuu', cat: '추상' },
+      { id: 25, kor: '천천히', kana: 'ゆっくり', kanji: 'ゆっくり', romaji: 'yukkuri', cat: '부사' },
+      { id: 26, kor: '결석', kana: 'けっせき', kanji: '欠席', romaji: 'kesseki', cat: '학교' },
+      { id: 27, kor: '잠깐', kana: 'ちょっと', kanji: 'ちょっと', romaji: 'chotto', cat: '부사' },
+      { id: 28, kor: '일기', kana: 'にっき', kanji: '日記', romaji: 'nikki', cat: '생활' },
+      { id: 29, kor: '잡지', kana: 'ざっし', kanji: '雑誌', romaji: 'zasshi', cat: '사물' },
+      { id: 30, kor: '우표', kana: 'きって', kanji: '切手', romaji: 'kitte', cat: '사물' },
+      { id: 31, kor: '표', kana: 'きっぷ', kanji: '切符', romaji: 'kippu', cat: '사물' },
+      { id: 32, kor: '가득', kana: 'いっぱい', kanji: 'いっぱい', romaji: 'ippai', cat: '부사' },
+      { id: 33, kor: '언덕', kana: 'さか', kanji: '坂', romaji: 'saka', cat: '자연' },
+      { id: 34, kor: '작가', kana: 'さっか', kanji: '作家', romaji: 'sakka', cat: '인물' },
+      { id: 35, kor: '소리', kana: 'おと', kanji: '音', romaji: 'oto', cat: '추상' },
+      { id: 36, kor: '남편', kana: 'おっと', kanji: '夫', romaji: 'otto', cat: '가족' },
+      { id: 37, kor: '선배', kana: 'せんぱい', kanji: '先輩', romaji: 'senpai', cat: '인물' },
+      { id: 38, kor: '운전', kana: 'うんてん', kanji: '運転', romaji: 'unten', cat: '활동' },
+      { id: 39, kor: '산책', kana: 'さんぽ', kanji: '散歩', romaji: 'sanpo', cat: '활동' },
+      { id: 40, kor: '온천', kana: 'おんせん', kanji: '温泉', romaji: 'onsen', cat: '장소' },
+      { id: 41, kor: '일본어', kana: 'にほんご', kanji: '日本語', romaji: 'nihongo', cat: '언어' },
+      { id: 42, kor: '가방', kana: 'かばん', kanji: '鞄', romaji: 'kaban', cat: '사물' },
+      { id: 43, kor: '화재', kana: 'かじ', kanji: '火事', romaji: 'kaji', cat: '사건' },
+      { id: 44, kor: '한자', kana: 'かんじ', kanji: '漢字', romaji: 'kanji', cat: '언어' },
+      { id: 45, kor: '부하', kana: 'ぶか', kanji: '部下', romaji: 'buka', cat: '인물' },
+      { id: 46, kor: '문화', kana: 'ぶんか', kanji: '文化', romaji: 'bunka', cat: '사회' },
+      { id: 47, kor: '음악', kana: 'おんがく', kanji: '音楽', romaji: 'ongaku', cat: '예술' },
+      { id: 48, kor: '여기', kana: 'ここ', kanji: 'ここ', romaji: 'koko', cat: '지시' },
+      { id: 49, kor: '고등학교', kana: 'こうこう', kanji: '高校', romaji: 'koukou', cat: '학교' },
+      { id: 50, kor: '아저씨', kana: 'おじさん', kanji: '叔父/伯父', romaji: 'ojisan', cat: '인물' },
+      { id: 51, kor: '할아버지', kana: 'おじいさん', kanji: '祖父', romaji: 'ojiisan', cat: '가족' },
+      { id: 52, kor: '할머니', kana: 'おばあさん', kanji: '祖母', romaji: 'obaasan', cat: '가족' },
+      { id: 53, kor: '공항', kana: 'くうこう', kanji: '空港', romaji: 'kuukou', cat: '교통' },
+      { id: 54, kor: '시계', kana: 'とけい', kanji: '時計', romaji: 'tokei', cat: '사물' },
+      { id: 55, kor: '스모', kana: 'すもう', kanji: '相撲', romaji: 'sumou', cat: '스포츠' },
+      { id: 56, kor: '처음 뵙겠습니다', kana: 'はじめまして', kanji: '初めまして', romaji: 'hajimemashite', cat: '인사' },
+      { id: 57, kor: '나', kana: 'わたし', kanji: '私', romaji: 'watashi', cat: '인칭' },
+      { id: 58, kor: '~은 / 는', kana: 'は', kanji: 'は (wa)', romaji: 'wa', cat: '조사' },
+      { id: 59, kor: '~입니다', kana: 'です', kanji: 'です', romaji: 'desu', cat: '문법' },
+      { id: 60, kor: '한국', kana: 'かんこく', kanji: '韓国', romaji: 'kankoku', cat: '국가' },
+      { id: 61, kor: '~에서', kana: 'から', kanji: 'から', romaji: 'kara', cat: '조사' },
+      { id: 62, kor: '왔습니다', kana: 'きました', kanji: '来ました', romaji: 'kimashita', cat: '동사' },
+      { id: 63, kor: '부디', kana: 'どうぞ', kanji: 'どうぞ', romaji: 'douzo', cat: '표현' },
+      { id: 64, kor: '잘', kana: 'よろしく', kanji: 'よろしく', romaji: 'yoroshiku', cat: '표현' },
+      { id: 65, kor: '부탁합니다', kana: 'おねがいします', kanji: 'お願いします', romaji: 'onegaishimasu', cat: '표현' },
+      { id: 66, kor: '일본', kana: 'にほん', kanji: '日本', romaji: 'nihon', cat: '국가' },
+      { id: 67, kor: '도쿄', kana: 'とうきょう', kanji: '東京', romaji: 'toukyou', cat: '도시' },
+      { id: 68, kor: '미국', kana: 'アメリカ', kanji: 'アメリカ', romaji: 'amerika', cat: '국가' },
+      { id: 69, kor: '중국', kana: 'ちゅうごく', kanji: '中国', romaji: 'chuugoku', cat: '국가' },
+      { id: 70, kor: '안녕하세요(아침)', kana: 'おはようございます', kanji: 'お早うございます', romaji: 'ohayougozaimasu', cat: '인사' },
+      { id: 71, kor: '안녕(아침)', kana: 'おはよう', kanji: 'お早う', romaji: 'ohayou', cat: '인사' },
+      { id: 72, kor: '안녕하세요(낮)', kana: 'こんにちは', kanji: 'こんにちは', romaji: 'konnichiwa', cat: '인사' },
+      { id: 73, kor: '안녕하세요(저녁)', kana: 'こんばんは', kanji: '今晩は', romaji: 'konbanwa', cat: '인사' },
+      { id: 74, kor: '안녕히 가세요', kana: 'さようなら', kanji: '左様なら', romaji: 'sayounara', cat: '인사' },
+      { id: 75, kor: '그럼 안녕', kana: 'じゃあね', kanji: 'じゃあね', romaji: 'jaane', cat: '인사' },
+      { id: 76, kor: '또 만나', kana: 'またね', kanji: 'またね', romaji: 'matane', cat: '인사' },
+      { id: 77, kor: '내일 또 봐', kana: 'また あした', kanji: 'また明日', romaji: 'mata ashita', cat: '인사' },
+      { id: 78, kor: '1', kana: 'いち', kanji: '一', romaji: 'ichi', cat: '숫자' },
+      { id: 79, kor: '2', kana: 'に', kanji: '二', romaji: 'ni', cat: '숫자' },
+      { id: 80, kor: '3', kana: 'さん', kanji: '三', romaji: 'san', cat: '숫자' },
+      { id: 81, kor: '4', kana: 'よん / し', kanji: '四', romaji: 'yon / shi', cat: '숫자' },
+      { id: 82, kor: '5', kana: 'ご', kanji: '五', romaji: 'go', cat: '숫자' },
+      { id: 83, kor: '6', kana: 'ろく', kanji: '六', romaji: 'roku', cat: '숫자' },
+      { id: 84, kor: '7', kana: 'なな / しち', kanji: '七', romaji: 'nana / shichi', cat: '숫자' },
+      { id: 85, kor: '8', kana: 'はち', kanji: '八', romaji: 'hachi', cat: '숫자' },
+      { id: 86, kor: '9', kana: 'きゅう / く', kanji: '九', romaji: 'kyuu / ku', cat: '숫자' },
+      { id: 87, kor: '10', kana: 'じゅう', kanji: '十', romaji: 'juu', cat: '숫자' },
+      { id: 88, kor: '0', kana: 'ゼロ / れい', kanji: 'ゼロ / 零', romaji: 'zero / rei', cat: '숫자' },
+      { id: 89, kor: '몇 / 무엇', kana: 'なん', kanji: '何', romaji: 'nan / nani', cat: '의문사' },
+      { id: 90, kor: '~학년', kana: 'ねんせい', kanji: '〜年生', romaji: '~nensei', cat: '접미사' },
+      { id: 91, kor: '~까?', kana: 'か', kanji: '〜か', romaji: 'ka', cat: '조사' },
+      { id: 92, kor: '취미', kana: 'しゅみ', kanji: '趣味', romaji: 'shumi', cat: '생활' },
+      { id: 93, kor: '수영', kana: 'すいえい', kanji: '水泳', romaji: 'suiei', cat: '스포츠' },
+      { id: 94, kor: '여행', kana: 'りょこう', kanji: '旅行', romaji: 'ryokou', cat: '활동' },
+      { id: 95, kor: '야구', kana: 'やきゅう', kanji: '野球', romaji: 'yakyuu', cat: '스포츠' },
+      { id: 96, kor: '게임', kana: 'ゲーム', kanji: 'ゲーム', romaji: 'ge-mu', cat: '취미' },
+      { id: 97, kor: '돼지', kana: 'ぶた', kanji: '豚', romaji: 'buta', cat: '동물' },
+      { id: 98, kor: '어머니', kana: 'おかあさん', kanji: 'お母さん', romaji: 'okaasan', cat: '가족' },
+      { id: 99, kor: '형', kana: 'おにいさん', kanji: 'お兄さん', romaji: 'oniisan', cat: '가족' },
+      { id: 100, kor: '수학', kana: 'すうがく', kanji: '数学', romaji: 'suugaku', cat: '학습' },
+      { id: 101, kor: '누나', kana: 'おねえさん', kanji: 'お姉さん', romaji: 'oneesan', cat: '가족' },
+      { id: 102, kor: '선생님', kana: 'せんせい', kanji: '先生', romaji: 'sensei', cat: '인물' },
+      { id: 103, kor: '얼음', kana: 'こおり', kanji: '氷', romaji: 'koori', cat: '사물' },
+      { id: 104, kor: '아버지', kana: 'おとうさん', kanji: 'お父さん', romaji: 'otousan', cat: '가족' }
+    ];
+
+    const KANA_DATA = [
+      { char: 'あ', romaji: 'a', kor: '아', strokes: 3 }, { char: 'い', romaji: 'i', kor: '이', strokes: 2 }, { char: 'う', romaji: 'u', kor: '우', strokes: 2 }, { char: 'え', romaji: 'e', kor: '에', strokes: 2 }, { char: 'お', romaji: 'o', kor: '오', strokes: 3 },
+      { char: 'か', romaji: 'ka', kor: '카', strokes: 3 }, { char: 'き', romaji: 'ki', kor: '키', strokes: 4 }, { char: 'く', romaji: 'ku', kor: '쿠', strokes: 1 }, { char: 'け', romaji: 'ke', kor: '케', strokes: 3 }, { char: 'こ', romaji: 'ko', kor: '코', strokes: 2 },
+      { char: 'さ', romaji: 'sa', kor: '사', strokes: 3 }, { char: 'し', romaji: 'shi', kor: '시', strokes: 1 }, { char: 'す', romaji: 'su', kor: '스', strokes: 2 }, { char: 'せ', romaji: 'se', kor: '세', strokes: 3 }, { char: 'そ', romaji: 'so', kor: '소', strokes: 1 },
+      { char: 'た', romaji: 'ta', kor: '타', strokes: 4 }, { char: 'ち', romaji: 'chi', kor: '치', strokes: 2 }, { char: 'つ', romaji: 'tsu', kor: '츠', strokes: 1 }, { char: 'て', romaji: 'te', kor: '테', strokes: 1 }, { char: 'と', romaji: 'to', kor: '토', strokes: 2 },
+      { char: 'な', romaji: 'na', kor: '나', strokes: 4 }, { char: 'に', romaji: 'ni', kor: '니', strokes: 3 }, { char: 'ぬ', romaji: 'nu', kor: '누', strokes: 2 }, { char: 'ね', romaji: 'ne', kor: '네', strokes: 2 }, { char: 'の', romaji: 'no', kor: '노', strokes: 1 },
+      { char: 'は', romaji: 'ha', kor: '하', strokes: 3 }, { char: 'ひ', romaji: 'hi', kor: '히', strokes: 1 }, { char: 'ふ', romaji: 'fu', kor: '후', strokes: 4 }, { char: 'へ', romaji: 'he', kor: '헤', strokes: 1 }, { char: 'ほ', romaji: 'ho', kor: '호', strokes: 4 },
+      { char: 'ま', romaji: 'ma', kor: '마', strokes: 3 }, { char: 'み', romaji: 'mi', kor: '미', strokes: 2 }, { char: 'む', romaji: 'mu', kor: '무', strokes: 3 }, { char: 'め', romaji: 'me', kor: '메', strokes: 2 }, { char: 'も', romaji: 'mo', kor: '모', strokes: 3 },
+      { char: 'や', romaji: 'ya', kor: '야', strokes: 3 }, { char: 'ゆ', romaji: 'yu', kor: '유', strokes: 2 }, { char: 'よ', romaji: 'yo', kor: '요', strokes: 2 },
+      { char: 'ら', romaji: 'ra', kor: '라', strokes: 2 }, { char: 'り', romaji: 'ri', kor: '리', strokes: 2 }, { char: 'る', romaji: 'ru', kor: '루', strokes: 1 }, { char: 'れ', romaji: 're', kor: '레', strokes: 2 }, { char: 'ろ', romaji: 'ro', kor: '로', strokes: 1 },
+      { char: 'わ', romaji: 'wa', kor: '와', strokes: 2 }, { char: 'を', romaji: 'wo', kor: '오/을', strokes: 3 }, { char: 'ん', romaji: 'n', kor: '응/받침', strokes: 1 },
+      { char: 'が', romaji: 'ga', kor: '가', strokes: 5 }, { char: 'ぎ', romaji: 'gi', kor: '기', strokes: 6 }, { char: 'ぐ', romaji: 'gu', kor: '구', strokes: 3 }, { char: 'げ', romaji: 'ge', kor: '게', strokes: 5 }, { char: 'ご', romaji: 'go', kor: '고', strokes: 4 },
+      { char: 'ざ', romaji: 'za', kor: '자', strokes: 5 }, { char: 'じ', romaji: 'ji', kor: '지', strokes: 3 }, { char: 'ず', romaji: 'zu', kor: '즈', strokes: 4 }, { char: 'ぜ', romaji: 'ze', kor: '제', strokes: 5 }, { char: 'ぞ', romaji: 'zo', kor: '조', strokes: 3 },
+      { char: 'だ', romaji: 'da', kor: '다', strokes: 6 }, { char: 'ぢ', romaji: 'ji', kor: '지', strokes: 4 }, { char: 'づ', romaji: 'zu', kor: '즈', strokes: 3 }, { char: 'で', romaji: 'de', kor: '데', strokes: 3 }, { char: 'ど', romaji: 'do', kor: '도', strokes: 4 },
+      { char: 'ば', romaji: 'ba', kor: '바', strokes: 5 }, { char: 'び', romaji: 'bi', kor: '비', strokes: 3 }, { char: 'ぶ', romaji: 'bu', kor: '부', strokes: 6 }, { char: 'べ', romaji: 'be', kor: '베', strokes: 3 }, { char: 'ぼ', romaji: 'bo', kor: '보', strokes: 6 },
+      { char: 'ぱ', romaji: 'pa', kor: '파', strokes: 4 }, { char: 'ぴ', romaji: 'pi', kor: '피', strokes: 2 }, { char: 'ぷ', romaji: 'pu', kor: '푸', strokes: 5 }, { char: 'ぺ', romaji: 'pe', kor: '페', strokes: 2 }, { char: 'ぽ', romaji: 'po', kor: '포', strokes: 5 }
+    ];
+
+    const Storage = {
+      KEY: 'hiragana_pro_luxe_v6',
+      state: {
+        nickname: '학습자', score: 0, streak: 0, todayCount: 0,
+        sound: true, speechRate: 0.75,
+        matchHistory: [], wrongNotebook: {}, history: { correct: 0, total: 0 }
+      },
+      load() {
+        try { const raw = localStorage.getItem(this.KEY); if(raw) this.state = Object.assign(this.state, JSON.parse(raw)); } catch(e){}
+        this.syncUI();
+      },
+      save() { localStorage.setItem(this.KEY, JSON.stringify(this.state)); this.syncUI(); },
+      addScore(pts) {
+        this.state.score += pts; this.state.todayCount++; this.state.history.total++; this.state.history.correct++;
+        this.save();
+      },
+      recordWrong(key, data) {
+        this.state.streak = 0; this.state.todayCount++; this.state.history.total++;
+        if(!this.state.wrongNotebook[key]) this.state.wrongNotebook[key] = Object.assign({ count: 0, time: Date.now() }, data);
+        this.state.wrongNotebook[key].count++;
+        this.save(); renderNotebook();
+      },
+      recordMatch(result) {
+        this.state.matchHistory.unshift(result);
+        if(this.state.matchHistory.length > 20) this.state.matchHistory.pop();
+        this.save(); renderBattleHistory();
+      },
+      syncUI() {
+        const setTxt = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
+        setTxt('headerScore', this.state.score.toLocaleString());
+        setTxt('homeStreak', this.state.streak);
+        setTxt('homeToday', this.state.todayCount);
+        setTxt('homeWrong', Object.keys(this.state.wrongNotebook).length);
+        setTxt('headerNickname', this.state.nickname);
+        const inpNick = document.getElementById('inputNickname'); if(inpNick) inpNick.value = this.state.nickname;
+        const rate = this.state.history.total > 0 ? Math.round((this.state.history.correct / this.state.history.total) * 100) : 0;
+        setTxt('homeMastery', `${rate}%`);
+        setTxt('soundToggle', this.state.sound ? '🔊' : '🔇');
+      }
+    };
+
+    function speakText(text) {
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.split('/')[0].trim());
+      u.lang = 'ja-JP'; u.rate = parseFloat(Storage.state.speechRate) || 0.75;
+      window.speechSynthesis.speak(u);
+    }
+
+    const SoundEngine = {
+      ctx: null,
+      init() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); if(this.ctx.state==='suspended') this.ctx.resume(); },
+      playSuccess() {
+        if(!Storage.state.sound) return; this.init();
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+          osc.type = 'triangle'; osc.frequency.value = f;
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime + i*0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i*0.07 + 0.3);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + i*0.07); osc.stop(this.ctx.currentTime + i*0.07 + 0.35);
+        });
+      },
+      playError() {
+        if(!Storage.state.sound) return; this.init();
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(160, this.ctx.currentTime); osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime+0.22);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime); gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime+0.22);
+        osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+0.23);
+      }
+    };
+
+    let battleRng = Math.random;
+    function mulberry32(a) {
+      return function() {
+        var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      }
+    }
+
+    let peer=null, peerConn=null, myPeerId='', isP2pHost=false;
+    let p2pTimer=null, p2pTime=30, p1Score=0, p2Score=0;
+
+    function initPeerJS() {
+      if(typeof Peer === 'undefined') return;
+      myPeerId = `HIRA-${Math.random().toString(36).substring(2,7).toUpperCase()}`;
+      try {
+        peer = new Peer(myPeerId, { config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] } });
+        peer.on('open', (id) => { myPeerId = id; const el = document.getElementById('txtMyRoomCode'); if(el) el.innerText = id; });
+        peer.on('connection', (conn) => {
+          peerConn = conn; isP2pHost = true;
+          document.getElementById('p2pStatusLabel').innerText = '✅ 연결되었습니다! 게임 준비 중...';
+          bindPeerEvents();
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    function bindPeerEvents() {
+      peerConn.on('data', (d) => {
+        if(d.type==='HANDSHAKE') {
+          document.getElementById('hudPeerName').innerText = d.name || '상대';
+          document.getElementById('hudMyName').innerText = Storage.state.nickname;
+          if(isP2pHost) { setTimeout(() => { const s = Math.floor(Math.random()*9999); peerConn.send({type:'START', seed:s}); startP2pGame(s); }, 1000); }
+        } else if(d.type==='START') startP2pGame(d.seed);
+        else if(d.type==='SCORE') { p2Score = d.score; document.getElementById('hudPeerScore').innerText = p2Score; }
+        else if(d.type==='END') { p2Score = d.score; document.getElementById('hudPeerScore').innerText = p2Score; }
+      });
+      peerConn.on('close', () => { alert('연결이 끊어졌습니다.'); location.reload(); });
+      const ready = () => {
+        document.getElementById('p2pSetupPanel').style.display = 'none';
+        document.getElementById('p2pBattleArea').style.display = 'flex';
+        peerConn.send({type:'HANDSHAKE', name:Storage.state.nickname});
+      };
+      if(peerConn.open) ready(); else peerConn.on('open', ready);
+    }
+
+    function startP2pGame(seed) {
+      clearInterval(p2pTimer); p2pTime = 30; p1Score = 0; p2Score = 0;
+      document.getElementById('hudMyScore').innerText = '0'; document.getElementById('hudPeerScore').innerText = '0';
+      battleRng = mulberry32(seed); nextP2pQ();
+      p2pTimer = setInterval(() => {
+        p2pTime--; document.getElementById('p2pTimerText').innerText = `${p2pTime}s`;
+        if(p2pTime<=0) { clearInterval(p2pTimer); finishP2p(); }
+      }, 1000);
+    }
+
+    function nextP2pQ() {
+      const q = VOCAB_DATA[Math.floor(battleRng()*VOCAB_DATA.length)];
+      document.getElementById('p2pPromptText').innerText = q.kana;
+      const opts = [q.kor];
+      while(opts.length<4) { const r=VOCAB_DATA[Math.floor(battleRng()*VOCAB_DATA.length)].kor; if(!opts.includes(r)) opts.push(r); }
+      opts.sort(() => battleRng() - 0.5);
+      const grid = document.getElementById('p2pOptionsGrid'); grid.innerHTML = '';
+      opts.forEach(o => {
+        const b = document.createElement('button'); b.className = 'btn btn-secondary'; b.innerText = o;
+        b.onclick = () => {
+          if(o===q.kor) {
+            speakText(q.kana); p1Score+=100; document.getElementById('hudMyScore').innerText = p1Score;
+            if(peerConn && peerConn.open) peerConn.send({type:'SCORE', score:p1Score});
+          }
+          nextP2pQ();
+        };
+        grid.appendChild(b);
+      });
+    }
+
+    function finishP2pGame() {
+      if(peerConn && peerConn.open) peerConn.send({type:'END', score:p1Score});
+      const opp = document.getElementById('hudPeerName').innerText;
+      let out = '';
+      if(p1Score>p2Score) out = `🏆 내가 승리! (${p1Score} : ${p2Score})`;
+      else if(p2Score>p1Score) out = `😭 ${opp} 승리! (${p2Score} : ${p1Score})`;
+      else out = `🤝 무승부! (${p1Score} : ${p2Score})`;
+      Storage.recordMatch({ date: new Date().toLocaleDateString(), opponent: opp, myScore: p1Score, peerScore: p2Score, outcome: p1Score>p2Score?'WIN':(p2Score>p1Score?'LOSE':'DRAW') });
+      alert(out); spawnConfetti(); setTimeout(() => location.reload(), 3000);
+    }
+
+    on('btnHostGame', 'click', () => {
+      document.getElementById('p2pHostCodeArea').style.display = 'block';
+      document.getElementById('txtMyRoomCode').innerText = myPeerId;
+      document.getElementById('p2pStatusLabel').innerText = '대기 중...';
+    });
+    on('btnCopyRoomCode', 'click', () => { if(navigator.clipboard) navigator.clipboard.writeText(myPeerId).then(()=>alert('복사 완료!')); });
+    on('btnJoinGame', 'click', () => {
+      let tid = document.getElementById('inputJoinCode').value.trim().toUpperCase();
+      if(!tid) return alert('코드를 입력하세요');
+      if(!tid.startsWith('HIRA-')) tid = `HIRA-${tid}`;
+      document.getElementById('p2pStatusLabel').innerText = '연결 시도 중...';
+      if(!peer) return;
+      peerConn = peer.connect(tid, {reliable:true}); isP2pHost = false; bindPeerEvents();
+    });
+
+    /* Routing & Menus */
+    function switchScreen(id) {
+      document.querySelectorAll('.view-screen').forEach(v => v.classList.toggle('active', v.id === id));
+      if(id === 'view-dictation' || id === 'view-arena') setTimeout(resizeCanvases, 50);
+      if(id === 'view-chart') renderChart();
+    }
+    
+    // SAFE BINDINGS FOR MENUS
+    const navItems = [
+      { id: 'navParty', goto: 'view-party' },
+      { id: 'navKana', goto: 'view-kana-hub' },
+      { id: 'navVocab', goto: 'view-vocab' },
+      { id: 'navDictation', goto: 'view-dictation' },
+      { id: 'navArena', goto: 'view-arena' },
+      { id: 'navSettings', goto: 'view-settings' }
+    ];
+    navItems.forEach(n => {
+      const el = document.getElementById(n.id);
+      if(el) {
+        el.addEventListener('click', () => switchScreen(n.goto));
+        el.addEventListener('touchstart', () => switchScreen(n.goto), {passive: true});
+      }
+    });
+
+    document.querySelectorAll('.btn-back-home').forEach(b => {
+      b.addEventListener('click', () => switchScreen('view-home'));
+    });
+
+    on('homeLogo', 'click', () => switchScreen('view-home'));
+    on('btnSettingsNav', 'click', () => switchScreen('view-settings'));
+    on('soundToggle', 'click', () => { Storage.state.sound = !Storage.state.sound; Storage.save(); });
+    on('btnOpenProfile', 'click', () => document.getElementById('profileModal').classList.add('show'));
+    on('btnCloseProfileModal', 'click', () => document.getElementById('profileModal').classList.remove('show'));
+    on('btnSaveNickname', 'click', () => {
+      const v = document.getElementById('inputNickname').value.trim();
+      if(v.length >= 2) { Storage.state.nickname = v; Storage.save(); document.getElementById('profileModal').classList.remove('show'); }
+      else alert('2자 이상 입력하세요.');
+    });
+
+    let kIdx = 0, kOrder = 'seq', kPool = [...KANA_DATA];
+    on('btnKanaTabCard', 'click', () => {
+      document.getElementById('btnKanaTabCard').classList.add('active'); document.getElementById('btnKanaTabMatch').classList.remove('active');
+      document.getElementById('kanaModeCard').style.display = 'flex'; document.getElementById('kanaModeMatch').style.display = 'none';
+      document.getElementById('kanaOrderGroup').style.display = 'flex';
+    });
+    on('btnKanaTabMatch', 'click', () => {
+      document.getElementById('btnKanaTabMatch').classList.add('active'); document.getElementById('btnKanaTabCard').classList.remove('active');
+      document.getElementById('kanaModeCard').style.display = 'none'; document.getElementById('kanaModeMatch').style.display = 'flex';
+      document.getElementById('kanaOrderGroup').style.display = 'none'; startMemoryGame();
+    });
+    on('kanaCardInner', 'click', (e) => {
+      if(e.target.closest('#kCardAudio')) return;
+      document.getElementById('kanaCardInner').classList.toggle('flipped');
+      if(document.getElementById('kanaCardInner').classList.contains('flipped')) speakText(kPool[kIdx].char);
+    });
+    on('kCardAudio', 'click', () => speakText(kPool[kIdx].char));
+    on('btnKNext', 'click', () => { kIdx = (kIdx+1)%kPool.length; renderK(); });
+    on('btnKPrev', 'click', () => { kIdx = (kIdx-1+kPool.length)%kPool.length; renderK(); });
+    function renderK() {
+      document.getElementById('kanaCardInner').classList.remove('flipped');
+      document.getElementById('kCardGlyph').innerText = kPool[kIdx].char;
+      document.getElementById('kCardRomaji').innerText = kPool[kIdx].romaji;
+      document.getElementById('kCardKor').innerText = `[ ${kPool[kIdx].kor} ] · ${kPool[kIdx].row}`;
+    }
+
+    let firstCard = null, lockGrid = false;
+    function startMemoryGame() {
+      const grid = document.getElementById('memoryMatrix'); grid.innerHTML = '';
+      firstCard = null; lockGrid = false;
+      const sub = [...KANA_DATA].sort(()=>Math.random()-0.5).slice(0,6);
+      let deck = [];
+      sub.forEach(k => { deck.push({id:k.char, txt:k.char, t:'k'}); deck.push({id:k.char, txt:k.romaji, t:'r'}); });
+      deck.sort(()=>Math.random()-0.5).forEach(c => {
+        const el = document.createElement('div'); el.className = 'memory-card'; el.innerText = c.txt;
+        el.onclick = () => {
+          if(lockGrid || el.classList.contains('matched') || el.classList.contains('selected')) return;
+          el.classList.add('selected');
+          if(!firstCard) firstCard = {el, c};
+          else {
+            lockGrid = true;
+            if(firstCard.c.id === c.id && firstCard.c.t !== c.t) {
+              setTimeout(() => { firstCard.el.className='memory-card matched'; el.className='memory-card matched'; speakText(c.id); firstCard=null; lockGrid=false; if(document.querySelectorAll('.memory-card:not(.matched)').length===0) spawnConfetti(); }, 300);
+            } else {
+              setTimeout(() => { firstCard.el.classList.remove('selected'); el.classList.remove('selected'); firstCard=null; lockGrid=false; }, 600);
+            }
+          }
+        };
+        grid.appendChild(el);
+      });
+    }
+    on('btnRestartMemory', 'click', startMemoryGame);
+
+    let vIdx = 0, vPool = [...VOCAB_DATA], vOrder = 'seq';
+    on('btnVOrderSeq', 'click', () => { vOrder='seq'; vPool=[...VOCAB_DATA]; vIdx=0; renderV(); });
+    on('btnVOrderShuffle', 'click', () => { vOrder='shuffle'; vPool=[...VOCAB_DATA].sort(()=>Math.random()-0.5); vIdx=0; renderV(); });
+    on('vFlashCardInner', 'click', (e) => { if(e.target.closest('#vCardAudio')) return; document.getElementById('vFlashCardInner').classList.toggle('flipped'); if(document.getElementById('vFlashCardInner').classList.contains('flipped')) speakText(vPool[vIdx].kana); });
+    on('vCardAudio', 'click', () => speakText(vPool[vIdx].kana));
+    on('btnVNext', 'click', () => { vIdx=(vIdx+1)%vPool.length; renderV(); });
+    on('btnVPrev', 'click', () => { vIdx=(vIdx-1+vPool.length)%vPool.length; renderV(); });
+    function renderV() {
+      document.getElementById('vFlashCardInner').classList.remove('flipped');
+      document.getElementById('vCardKor').innerText = vPool[vIdx].kor; document.getElementById('vCardKana').innerText = vPool[vIdx].kana;
+      document.getElementById('vCardKanji').innerText = vPool[vIdx].kanji!==vPool[vIdx].kana ? vPool[vIdx].kanji : ''; document.getElementById('vCardRomaji').innerText = vPool[vIdx].romaji;
+    }
+
+    ['vTabFlash','vTabQuiz','vTabBuilder','vTabList'].forEach(id => {
+      on(id, 'click', () => {
+        ['vSecFlash','vSecQuiz','vSecBuilder','vSecList'].forEach(s => document.getElementById(s).style.display = s.replace('Sec','Tab')===id ? (s==='vSecBuilder'?'flex':'block') : 'none');
+        ['vTabFlash','vTabQuiz','vTabBuilder','vTabList'].forEach(t => document.getElementById(t).classList.toggle('active', t===id));
+        if(id==='vTabQuiz') nextVQuiz(); if(id==='vTabBuilder') setupVBuild(); if(id==='vTabList') renderVList();
+      });
+    });
+
+    let qDir = 'kor_to_jap', vQItem = null;
+    on('btnDirKorJap', 'click', () => { qDir='kor_to_jap'; document.getElementById('vQuizPromptAudio').style.display='none'; nextVQuiz(); });
+    on('btnDirJapKor', 'click', () => { qDir='jap_to_kor'; document.getElementById('vQuizPromptAudio').style.display='inline-block'; nextVQuiz(); });
+    function nextVQuiz() {
+      vQItem = vOrder==='seq'?vPool[vIdx%vPool.length]:VOCAB_DATA[Math.floor(Math.random()*VOCAB_DATA.length)];
+      document.getElementById('vQuizCat').innerText = vQItem.cat;
+      if(qDir==='kor_to_jap') { document.getElementById('vQuizPrompt').innerText = vQItem.kor; }
+      else { document.getElementById('vQuizPrompt').innerText = vQItem.kana; document.getElementById('vQuizPromptAudio').onclick = () => speakText(vQItem.kana); }
+      const cOpt = qDir==='kor_to_jap' ? vQItem.kana : vQItem.kor;
+      const opts = [cOpt];
+      while(opts.length<4) { const r=VOCAB_DATA[Math.floor(Math.random()*VOCAB_DATA.length)]; const v=qDir==='kor_to_jap'?r.kana:r.kor; if(!opts.includes(v)) opts.push(v); }
+      opts.sort(()=>Math.random()-0.5);
+      const grid = document.getElementById('vQuizGrid'); grid.innerHTML = '';
+      opts.forEach(o => {
+        const b = document.createElement('button'); b.className='btn btn-secondary'; b.innerText=o;
+        b.onclick = () => {
+          if(o===cOpt) { b.classList.add('btn-primary'); Storage.addScore(80); speakText(vQItem.kana); spawnConfetti(); if(vOrder==='seq') vIdx++; setTimeout(nextVQuiz, 850); }
+          else { b.style.background='var(--danger)'; SoundEngine.playError(); Storage.recordWrong(vQItem.kor, vQItem); }
+        };
+        grid.appendChild(b);
+      });
+    }
+
+    let bTarget=null, bSel=[];
+    function setupVBuild() {
+      const cln = (vOrder==='seq'?vPool:VOCAB_DATA).filter(w=>!w.kana.includes(' ')&&w.kana.length<=6);
+      bTarget = vOrder==='seq'?cln[vIdx%cln.length]:cln[Math.floor(Math.random()*cln.length)];
+      bSel=[]; document.getElementById('bKorTarget').innerText = bTarget.kor; document.getElementById('bBanner').className='verdict-banner';
+      rendBSlots();
+      const chrs = bTarget.kana.split(''); const cfs = ['あ','お','め','ぬ','れ','わ','ね','る','ろ','さ','き','ち','は','ほ','ば','ぱ','ま','も'];
+      while(chrs.length<Math.max(10, bTarget.kana.length+6)) chrs.push(cfs[Math.floor(Math.random()*cfs.length)]);
+      chrs.sort(()=>Math.random()-0.5);
+      const t = document.getElementById('bPillsTray'); t.innerHTML='';
+      chrs.forEach(c => {
+        const b = document.createElement('button'); b.className='btn btn-secondary'; b.style.fontFamily='"M PLUS Rounded 1c"'; b.innerText=c;
+        b.onclick = () => { b.style.opacity='0.2'; b.style.pointerEvents='none'; bSel.push({c, b}); rendBSlots(); chkBuild(); };
+        t.appendChild(b);
+      });
+    }
+    function rendBSlots() {
+      const s = document.getElementById('bSlots'); s.innerHTML='';
+      if(!bSel.length) { s.innerHTML='<span style="font-size:13px; color:var(--text-tertiary);">글자를 탭하세요</span>'; return; }
+      bSel.forEach((x, i) => {
+        const sp = document.createElement('span'); sp.style.cssText='padding:6px 12px; background:rgba(99,102,241,0.2); border-radius:8px; font-weight:900; font-size:22px; font-family:"M PLUS Rounded 1c"; cursor:pointer;'; sp.innerText=x.c;
+        sp.onclick = () => { x.b.style.opacity='1'; x.b.style.pointerEvents='auto'; bSel.splice(i, 1); rendBSlots(); };
+        s.appendChild(sp);
+      });
+    }
+    function chkBuild() {
+      const t = bSel.map(x=>x.c).join('');
+      const bn = document.getElementById('bBanner');
+      if(t===bTarget.kana) { bn.className='verdict-banner show pass'; bn.innerText='정답!'; Storage.addScore(100); speakText(bTarget.kana); spawnConfetti(); if(vOrder==='seq') vIdx++; setTimeout(setupVBuild, 1400); }
+      else if(t.length>=bTarget.kana.length) { bn.className='verdict-banner show fail'; bn.innerText='오답!'; SoundEngine.playError(); Storage.recordWrong(bTarget.kor, bTarget); }
+    }
+    on('btnBReset', 'click', () => { bSel.forEach(x=>{x.b.style.opacity='1'; x.b.style.pointerEvents='auto';}); bSel=[]; rendBSlots(); document.getElementById('bBanner').className='verdict-banner'; });
+    on('btnBNext', 'click', () => { if(vOrder==='seq') vIdx++; setupVBuild(); });
+    
+    function renderVList(f='') {
+      const c = document.getElementById('wbList'); c.innerHTML='';
+      VOCAB_DATA.filter(w=>w.kor.includes(f)||w.kana.includes(f)||w.romaji.includes(f)).forEach(w => {
+        const r = document.createElement('div'); r.style.cssText='display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.25); border-radius:12px;';
+        r.innerHTML=`<div><div style="font-weight:800;">${w.kor} <span style="font-size:11px; color:var(--text-tertiary);">[${w.cat}]</span></div><div style="font-family:'M PLUS Rounded 1c'; font-size:18px; font-weight:900; color:var(--primary);">${w.kana}</div></div><button class="icon-btn" style="width:36px;height:36px;">🔊</button>`;
+        r.querySelector('.icon-btn').onclick = () => speakText(w.kana); c.appendChild(r);
+      });
+    }
+    const sInp = document.getElementById('wbSearch');
+    if(sInp) sInp.addEventListener('input', (e) => renderVList(e.target.value.trim()));
+
+    /* DICTATION */
+    let dIdx = 0, dWord = null, dChars = [], dCIdx = 0, dStrokes = [], dActive = [], dTimer = null;
+    let dPool = VOCAB_DATA.filter(w=>w.kana.length>=2 && w.kana.length<=4);
+    function initDict() {
+      dWord = dPool[Math.floor(Math.random()*dPool.length)]; dChars = dWord.kana.split(''); dCIdx = 0;
+      document.getElementById('dictKorPrompt').innerText = dWord.kor;
+      document.getElementById('btnDictAudio').onclick = () => speakText(dWord.kana);
+      setDChar();
+    }
+    function setDChar() {
+      const b = document.getElementById('dictProgressBadges'); b.innerHTML='';
+      dChars.forEach((ch, i) => {
+        const d = document.createElement('div'); d.className=`char-step-badge ${i<dCIdx?'done':(i===dCIdx?'current':'')}`; d.innerText = i<dCIdx?ch:(i===dCIdx?`${i+1}`:'?'); b.appendChild(d);
+      });
+      document.getElementById('dictGhost').innerText = dChars[dCIdx]; document.getElementById('dictGhost').classList.remove('show');
+      clrDC();
+    }
+    function clrDC() { if(dTimer) clearTimeout(dTimer); dStrokes=[]; dActive=[]; const c=document.getElementById('dictCanvas'); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); document.getElementById('dictVerdict').className='verdict-banner'; }
+    const dC = document.getElementById('dictCanvas');
+    if(dC) {
+      const getPt = e => { const r=dC.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if(e.touches&&e.touches.length) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return {x:cx-r.left, y:cy-r.top}; };
+      const dDraw = (e) => { e.preventDefault(); dActive = [getPt(e)]; dStrokes.push(dActive); };
+      const dMove = (e) => { if(!dActive.length) return; e.preventDefault(); dActive.push(getPt(e)); rndSt(dC.getContext('2d'), dActive); };
+      const dUp = () => { if(dActive.length) { dActive=[]; if(dTimer) clearTimeout(dTimer); dTimer=setTimeout(chkD, 950); } };
+      dC.addEventListener('mousedown', dDraw); window.addEventListener('mousemove', dMove); window.addEventListener('mouseup', dUp);
+      dC.addEventListener('touchstart', dDraw, {passive:false}); window.addEventListener('touchmove', dMove, {passive:false}); window.addEventListener('touchend', dUp);
+    }
+    function rndSt(ctx, pts) { if(pts.length<2) return; ctx.strokeStyle='#f43f5e'; ctx.lineWidth=14; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for(let i=1; i<pts.length; i++) { const xc=(pts[i].x+pts[i-1].x)/2, yc=(pts[i].y+pts[i-1].y)/2; ctx.quadraticCurveTo(pts[i-1].x, pts[i-1].y, xc, yc); } ctx.stroke(); }
+    function chkD() {
+      if(!dStrokes.length) return;
+      const s = evalC(dC, dChars[dCIdx]);
+      if(s>=58) {
+        speakText(dChars[dCIdx]); document.getElementById('dictGhost').classList.add('show'); document.getElementById('dictVerdict').className='verdict-banner show pass'; document.getElementById('dictVerdict').innerText=`통과! (${s}점)`;
+        setTimeout(() => { dCIdx++; if(dCIdx>=dChars.length) { Storage.addScore(150); spawnConfetti(); document.getElementById('dictVerdict').innerText='단어 완성!'; setTimeout(initDict, 1500); } else setDChar(); }, 1000);
+      } else {
+        document.getElementById('dictVerdict').className='verdict-banner show fail'; document.getElementById('dictVerdict').innerText=`오답 (${s}점)`; SoundEngine.playError(); dC.parentElement.classList.add('shake'); setTimeout(()=>dC.parentElement.classList.remove('shake'),400); Storage.recordWrong(dWord.kor, dWord);
+      }
+    }
+    on('btnDictClear', 'click', clrDC); on('btnDictSkip', 'click', initDict); on('btnDictPeek', 'click', () => { document.getElementById('dictGhost').classList.add('show'); setTimeout(()=>document.getElementById('dictGhost').classList.remove('show'), 1200); });
+
+    /* ARENA */
+    let aKana = null, aStrokes = [], aActive = [], aTimer = null;
+    function initArena() { aKana = KANA_DATA[Math.floor(Math.random()*KANA_DATA.length)]; document.getElementById('arenaRomaji').innerText = aKana.romaji; document.getElementById('arenaKor').innerText = `[ ${aKana.kor} ]`; document.getElementById('arenaGhost').innerText = aKana.char; document.getElementById('arenaGhost').classList.remove('show'); clrAC(); }
+    function clrAC() { if(aTimer) clearTimeout(aTimer); aStrokes=[]; aActive=[]; const c=document.getElementById('arenaCanvas'); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); document.getElementById('arenaVerdict').className='verdict-banner'; }
+    const aC = document.getElementById('arenaCanvas');
+    if(aC) {
+      const getPt = e => { const r=aC.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if(e.touches&&e.touches.length) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return {x:cx-r.left, y:cy-r.top}; };
+      const aDraw = (e) => { e.preventDefault(); aActive = [getPt(e)]; aStrokes.push(aActive); };
+      const aMove = (e) => { if(!aActive.length) return; e.preventDefault(); aActive.push(getPt(e)); rndSt(aC.getContext('2d'), aActive); };
+      const aUp = () => { if(aActive.length) { aActive=[]; if(aTimer) clearTimeout(aTimer); aTimer=setTimeout(chkA, 950); } };
+      aC.addEventListener('mousedown', aDraw); window.addEventListener('mousemove', aMove); window.addEventListener('mouseup', aUp);
+      aC.addEventListener('touchstart', aDraw, {passive:false}); window.addEventListener('touchmove', aMove, {passive:false}); window.addEventListener('touchend', aUp);
+    }
+    function chkA() {
+      if(!aStrokes.length) return;
+      const s = evalC(aC, aKana.char);
+      if(s>=58) {
+        speakText(aKana.char); document.getElementById('arenaGhost').classList.add('show'); document.getElementById('arenaVerdict').className='verdict-banner show pass'; document.getElementById('arenaVerdict').innerText=`정답! (${s}점)`; Storage.addScore(100); spawnConfetti(); setTimeout(initArena, 1300);
+      } else { document.getElementById('arenaVerdict').className='verdict-banner show fail'; document.getElementById('arenaVerdict').innerText=`오답 (${s}점)`; SoundEngine.playError(); Storage.recordWrong(aKana.char, aKana); aC.parentElement.classList.add('shake'); setTimeout(()=>aC.parentElement.classList.remove('shake'),400); }
+    }
+    on('btnArenaClear', 'click', clrAC); on('btnArenaSkip', 'click', initArena); on('btnArenaAudio', 'click', () => speakText(aKana.char)); on('btnArenaPeek', 'click', () => { document.getElementById('arenaGhost').classList.add('show'); setTimeout(()=>document.getElementById('arenaGhost').classList.remove('show'), 1200); });
+
+    function evalC(canv, tg) {
+      if(!canv) return 0; const sz=140; const rC = document.createElement('canvas'); rC.width=sz; rC.height=sz; const rx = rC.getContext('2d'); rx.font='bold 96px "M PLUS Rounded 1c"'; rx.textAlign='center'; rx.textBaseline='middle'; rx.fillStyle='#000'; rx.fillText(tg, sz/2, sz/2+4);
+      const rD = rx.getImageData(0,0,sz,sz).data; const uC = document.createElement('canvas'); uC.width=sz; uC.height=sz; const ux = uC.getContext('2d'); ux.drawImage(canv, 0,0,sz,sz); const uD = ux.getImageData(0,0,sz,sz).data;
+      let tP=0, uP=0, mP=0, oP=0; for(let y=0; y<sz; y++){ for(let x=0; x<sz; x++){ const i=(y*sz+x)*4; const iT=rD[i+3]>40; const iU=uD[i+3]>40; if(iT) tP++; if(iU) uP++; if(iT&&iU) mP++; if(!iT&&iU) oP++; } }
+      if(uP<tP*0.35) return 30; const cov = mP/(tP+1); const pre = Math.max(0, 1-(oP/(uP+1))); return Math.round((cov*0.65+pre*0.35)*100);
+    }
+
+    /* Notebook & Logs */
+    function renderNotebook() {
+      const g = document.getElementById('notebookGrid'); if(!g) return; g.innerHTML='';
+      Object.entries(Storage.state.wrongNotebook).forEach(([k, i]) => {
+        const d = document.createElement('div'); d.style.cssText='background:rgba(0,0,0,0.3); border:1px solid var(--surface-border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:6px;';
+        d.innerHTML=`<div style="font-family:'M PLUS Rounded 1c'; font-size:24px; font-weight:900; color:var(--danger);">${i.char||i.kana}</div><div style="font-size:13px; font-weight:700;">${i.kor} (${i.romaji})</div><button class="btn btn-secondary" style="font-size:11px; padding:4px;">🔊 듣기</button>`;
+        d.querySelector('button').onclick=()=>speakText(i.char||i.kana); g.appendChild(d);
+      });
+    }
+    function renderBattleHistory() {
+      const b = document.getElementById('battleHistoryList'); if(!b) return; b.innerHTML='';
+      Storage.state.matchHistory.forEach(m => {
+        const d = document.createElement('div'); d.style.cssText='display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(0,0,0,0.3); border-radius:8px; font-size:13px; font-weight:700;';
+        const c = m.outcome==='WIN'?'var(--gold)':(m.outcome==='LOSE'?'var(--danger)':'var(--text-secondary)');
+        d.innerHTML=`<div><span style="color:${c};">[${m.outcome}]</span> vs ${m.opponent}</div><div style="color:var(--text-secondary);">${m.myScore} : ${m.peerScore}</div>`;
+        b.appendChild(d);
+      });
+    }
+    on('btnClearNotebook', 'click', () => { if(confirm('비우시겠습니까?')) { Storage.state.wrongNotebook={}; Storage.save(); renderNotebook(); } });
+    on('btnResetData', 'click', () => { if(confirm('초기화하시겠습니까?')) { localStorage.clear(); location.reload(); } });
+
+    function renderChart() {
+      const g = document.getElementById('chartMatrixGrid'); if(!g) return; g.innerHTML='';
+      KANA_DATA.forEach(k => {
+        const c = document.createElement('div'); c.style.cssText='background:var(--card-inner); border:1px solid var(--border); border-radius:10px; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer;';
+        c.innerHTML=`<span style="font-family:'M PLUS Rounded 1c'; font-size:22px; font-weight:900;">${k.char}</span><span style="font-size:11px; color:var(--text-muted); font-weight:700;">${k.romaji}</span>`;
+        c.onclick = () => { speakText(k.char); aKana=k; switchScreen('view-arena'); clrAC(); document.getElementById('arenaRomaji').innerText=k.romaji; document.getElementById('arenaKor').innerText=`[ ${k.kor} ]`; document.getElementById('arenaGhost').innerText=k.char; };
+        g.appendChild(c);
+      });
+    }
+
+    function resizeCanvases() {
+      ['arenaCanvas', 'dictCanvas'].forEach(id => {
+        const c = document.getElementById(id); if(!c) return;
+        const r = c.getBoundingClientRect(); const d = window.devicePixelRatio || 1;
+        c.width = r.width * d; c.height = r.height * d; c.getContext('2d').scale(d, d);
+      });
+    }
+
+    const confCanvas = document.getElementById('confettiCanvas'); const confCtx = confCanvas ? confCanvas.getContext('2d') : null; const particles = [];
+    function setupConfetti() { if(confCanvas) { confCanvas.width = window.innerWidth; confCanvas.height = window.innerHeight; } }
+    window.addEventListener('resize', () => { setupConfetti(); resizeCanvases(); });
+    function spawnConfetti() {
+      const colors = ['#6366f1', '#38bdf8', '#fbbf24', '#10b981', '#f43f5e'];
+      for(let i=0; i<40; i++) particles.push({ x: window.innerWidth/2, y: window.innerHeight/2-30, vx: (Math.random()-0.5)*14, vy: (Math.random()-0.7)*16, size: Math.random()*8+4, color: colors[Math.floor(Math.random()*colors.length)], rot: Math.random()*360, vrot: (Math.random()-0.5)*12, alpha: 1 });
+    }
+    function animateConfetti() {
+      if(confCtx) {
+        confCtx.clearRect(0,0,confCanvas.width,confCanvas.height);
+        for(let i=particles.length-1; i>=0; i--) {
+          const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.35; p.rot+=p.vrot; p.alpha-=0.015;
+          if(p.alpha<=0) { particles.splice(i,1); continue; }
+          confCtx.save(); confCtx.globalAlpha=p.alpha; confCtx.translate(p.x, p.y); confCtx.rotate(p.rot*Math.PI/180); confCtx.fillStyle=p.color; confCtx.fillRect(-p.size/2, -p.size/2, p.size, p.size); confCtx.restore();
+        }
+      }
+      requestAnimationFrame(animateConfetti);
+    }
+    animateConfetti();
+
+    window.addEventListener('DOMContentLoaded', () => {
+      Storage.load(); setupConfetti(); resizeCanvases(); initPeerJS(); renderChart(); initArena(); initDict(); renderNotebook(); renderBattleHistory(); renderVList(); initVocabPool(); initKanaCard();
+    });
+  </script>
+</body>
+</html>
